@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+import time
+import RPi.GPIO as GPIO
+import mysql.connector
+from datetime import datetime
+
+# PINES BCM (físicamente: TRIG → Pin 16 (GPIO23), ECHO → Pin 18 (GPIO24) a través del divisor corregido R1=1kΩ, R2=2kΩ)
+TRIG_PIN = 23
+ECHO_PIN = 24
+
+# Configuración del “umbral ocupado” en centímetros
+UMBRAL_OCUPADO = 3.0
+
+# Número de lugar fijo que vamos a registrar en la base de datos
+NUM_LUGAR = 10
+
+# Parámetros de conexión a MariaDB – reemplaza según tu propio servidor/usuario/contraseña
+DB_CONFIG = {
+    'host':     'localhost',
+    'user':     'tu_usuario',       # ej. 'root'
+    'password': 'tu_contraseña',    # ej. 'MiPass123'
+    'database': 'ParkingGDA'
+}
+
+# ====================
+# Configuración GPIO
+# ====================
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(TRIG_PIN, GPIO.OUT)
+GPIO.setup(ECHO_PIN, GPIO.IN)
+
+def medir_distancia():
+    """
+    Envía un pulso al pin TRIG y mide el tiempo que ECHO está en HIGH.
+    Devuelve la distancia en centímetros o None si hay timeout.
+    """
+    # 1) Asegurar TRIG en LOW antes de empezar
+    GPIO.output(TRIG_PIN, False)
+    time.sleep(0.05)  # 50 ms para estabilizar
+
+    # 2) Generar pulso de 10 µs en TRIG
+    GPIO.output(TRIG_PIN, True)
+    time.sleep(0.00001)  # 10 microsegundos
+    GPIO.output(TRIG_PIN, False)
+
+    # 3) Esperar flanco de subida en ECHO (HIGH) con timeout de 20 ms
+    start_wait = time.time()
+    timeout_start = start_wait + 0.02  # 20 ms máximo esperando HIGH
+    while GPIO.input(ECHO_PIN) == 0:
+        if time.time() > timeout_start:
+            return None  # No detectó flanco de subida en ECHO
+
+    pulse_start = time.time()
+
+    # 4) Esperar flanco de bajada en ECHO (LOW) con timeout de 20 ms
+    timeout_end = pulse_start + 0.02
+    while GPIO.input(ECHO_PIN) == 1:
+        if time.time() > timeout_end:
+            return None  # No detectó flanco de bajada en ECHO
+
+    pulse_end = time.time()
+
+    # 5) Calcular duración del pulso y convertir a distancia
+    duracion = pulse_end - pulse_start
+    # Velocidad del sonido ~343 m/s → 34300 cm/s
+    distancia_cm = (duracion * 34300) / 2
+    return distancia_cm
+
+def actualizar_bd(estado, timestamp, num_lugar=NUM_LUGAR):
+    """
+    Conecta a la base de datos MariaDB y actualiza la tabla ‘Espacio’:
+    - estado: cadena ('Ocupado' o 'Libre')
+    - fecha_hora_actualizacion: timestamp en formato YYYY-MM-DD HH:MM:SS
+    - num_lugar: número fijo de lugar (10)
+    """
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        sql_update = """
+            UPDATE Espacio
+               SET estado = %s,
+                   fecha_hora_actualizacion = %s
+             WHERE NumLugar = %s;
+        """
+        cursor.execute(sql_update, (estado, timestamp, num_lugar))
+        conn.commit()
+    except mysql.connector.Error as err:
+        print(f"[ERROR BD] No se pudo actualizar la tabla Espacio: {err}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+try:
+    print("Iniciando detección (Ctrl+C para salir)…")
+    while True:
+        distancia = medir_distancia()
+
+        # Obtener timestamp actual en formato 'YYYY-MM-DD HH:MM:SS'
+        ahora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        if distancia is None:
+            # Timeout o no se detectó eco → consideramos Libre
+            estado_sensor = "Libre"
+            print(f"[DEBUG] No se detectó eco (timeout). → \"{estado_sensor}\"")
+        else:
+            print(f"[DEBUG] Distancia leída: {distancia:.1f} cm", end="  →  ")
+            if distancia <= UMBRAL_OCUPADO:
+                estado_sensor = "Ocupado"
+            else:
+                estado_sensor = "Libre"
+            print(estado_sensor)
+
+        # Mostrar lo que vamos a enviar (echo) y actualizar base de datos:
+        print(f"[ECHO] NumLugar: {NUM_LUGAR} | Estado: {estado_sensor} | Hora: {ahora}")
+
+        # Actualizar la tabla Espacio en MariaDB
+        actualizar_bd(estado_sensor, ahora, NUM_LUGAR)
+
+        time.sleep(0.5)
+
+except KeyboardInterrupt:
+    print("\nDetenido por el usuario. Liberando GPIO y cerrando programas…")
+
+finally:
+    GPIO.cleanup()
