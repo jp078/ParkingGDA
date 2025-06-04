@@ -104,7 +104,7 @@ def insertar_bd(estado, timestamp, num_lugar=NUM_LUGAR):
 # ===================================================================
 # BLYNK: Manejador de evento de conexión
 # ===================================================================
-@blynk.handle_event("connected")
+@blynk.on("connect")
 def blynk_connected_handler():
     print("[BLYNK] Conectado al servidor Blynk.")
 
@@ -144,4 +144,3 @@ except KeyboardInterrupt:
 
 finally:
     GPIO.cleanup()
-
