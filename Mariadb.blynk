@@ -5,7 +5,7 @@ import mysql.connector
 from datetime import datetime
 import BlynkLib
 
-BLYNK_AUTH   = 'gp1mhEblcX67AQ0ERUm3SuQEqd9ChaOo'
+BLYNK_AUTH   = '28fx8r48XhkSqC-jUBGSGopJ4Uui95X7'
 BLYNK_SERVER = 'blynk.cloud'
 BLYNK_PORT   = 443
 
