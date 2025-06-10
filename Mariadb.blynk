@@ -5,17 +5,13 @@ import mysql.connector
 from datetime import datetime
 import BlynkLib
 
-# ===================================================================
-# CONFIGURACIÓN BLYNK
-# ===================================================================
+
 BLYNK_AUTH   = '28fx8r48XhkSqC-jUBGSGopJ4Uui95X7'
 BLYNK_SERVER = 'blynk.cloud'
 BLYNK_PORT   = 443
 
-# Inicializamos Blynk con servidor y puerto personalizados
 blynk = BlynkLib.Blynk(BLYNK_AUTH, server=BLYNK_SERVER, port=BLYNK_PORT)
 
-# Solo utilizaremos el Virtual Pin V0 para enviar “Ocupado” o “Libre”
 V_PIN_ESTADO = 0
 
 # ===================================================================
