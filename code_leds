@@ -14,11 +14,11 @@ blynk = BlynkLib.Blynk(BLYNK_AUTH, server=BLYNK_SERVER, port=BLYNK_PORT)
 V_PIN_ESTADO = 0
 
 
-TRIG_PIN       = 23  # GPIO23 (pin fï¿½sico 16)
-ECHO_PIN       = 24  # GPIO24 (pin fï¿½sico 18)
-GREEN_PIN          = 20 # GPIO21 (pin fï¿½sico 40) ? LED rojo
-RED_PIN      = 21  # GPIO20 (pin fï¿½sico 38) ? LED verde
-UMBRAL_OCUPADO = 6.0  # cm
+TRIG_PIN       = 23  
+ECHO_PIN       = 24  
+GREEN_PIN          = 20
+RED_PIN      = 21  
+UMBRAL_OCUPADO = 6.0  
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(TRIG_PIN, GPIO.OUT)
@@ -34,7 +34,7 @@ GPIO.output(GREEN_PIN, False)
 DB_CONFIG = {
     'host':     'localhost',
     'user':     'root',      # ej. 'root'
-    'password': 'JP',   # ej. 'MiPass123'
+    'password': '',   # ej. 'MiPass123'
     'database': 'ParkeaTec'
 }
 
