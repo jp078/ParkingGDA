@@ -48,14 +48,14 @@ NUM_LUGAR = 10
 # ===================================================================
 def medir_distancia():
     """
-    Envía un pulso al pin TRIG y mide el tiempo que ECHO está en HIGH.
-    Devuelve la distancia en centímetros, o None si hay timeout.
+    EnvÃ­a un pulso al pin TRIG y mide el tiempo que ECHO estÃ¡ en HIGH.
+    Devuelve la distancia en centÃ­metros, o None si hay timeout.
     """
     GPIO.output(TRIG_PIN, False)
     time.sleep(0.05)  # 50 ms para estabilizar
 
     GPIO.output(TRIG_PIN, True)
-    time.sleep(0.00001)  # 10 µs
+    time.sleep(0.00001)  # 10 Âµs
     GPIO.output(TRIG_PIN, False)
 
     start_wait = time.time()
@@ -102,7 +102,7 @@ def insertar_bd(estado, timestamp, num_lugar=NUM_LUGAR):
             conn.close()
 
 # ===================================================================
-# BLYNK: Manejador de evento de conexión
+# BLYNK: Manejador de evento de conexiÃ³n
 # ===================================================================
 @blynk.on("connect")
 def blynk_connected_handler():
@@ -112,7 +112,7 @@ def blynk_connected_handler():
 # BUCLE PRINCIPAL
 # ===================================================================
 try:
-    print("Iniciando sistema (Ctrl+C para salir)…")
+    print("Iniciando sistema (Ctrl+C para salir)â€¦")
     while True:
         blynk.run()
 
@@ -121,16 +121,16 @@ try:
 
         if distancia is None:
             estado_sensor = "Libre"
-            print(f"[DEBUG] No se detectó eco → \"{estado_sensor}\"")
+            print(f"[DEBUG] No se detectÃ³ eco â†’ \"{estado_sensor}\"")
         else:
-            print(f"[DEBUG] Distancia: {distancia:.1f} cm", end="  →  ")
+            print(f"[DEBUG] Distancia: {distancia:.1f} cm", end="  â†’  ")
             if distancia <= UMBRAL_OCUPADO:
                 estado_sensor = "Ocupado"
             else:
                 estado_sensor = "Libre"
             print(estado_sensor)
 
-        # Control de LEDs según estado
+        # Control de LEDs segÃºn estado
         if estado_sensor == "Ocupado":
             GPIO.output(RED_PIN, True)
             GPIO.output(GREEN_PIN, False)
@@ -141,13 +141,13 @@ try:
         # 1) Insertar en la BD
         insertar_bd(estado_sensor, ahora)
 
-        # 2) Enviar solo “Ocupado” o “Libre” a Blynk en V0
+        # 2) Enviar solo â€œOcupadoâ€ o â€œLibreâ€ a Blynk en V0
         blynk.virtual_write(V_PIN_ESTADO, estado_sensor)
 
         time.sleep(0.5)
 
 except KeyboardInterrupt:
-    print("\nDetenido por el usuario. Liberando GPIO…")
+    print("\nDetenido por el usuario. Liberando GPIOâ€¦")
 
 finally:
     GPIO.cleanup()
