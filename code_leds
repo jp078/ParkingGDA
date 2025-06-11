@@ -26,7 +26,7 @@ GPIO.setup(ECHO_PIN, GPIO.IN)
 GPIO.setup(RED_PIN, GPIO.OUT)
 GPIO.setup(GREEN_PIN, GPIO.OUT)
 
-# Inicializar LEDs apagados
+
 GPIO.output(RED_PIN, False)
 GPIO.output(GREEN_PIN, False)
 
@@ -42,10 +42,7 @@ ID_ESPACIO = 1
 
 
 def medir_distancia():
-    """
-    Envï¿½a un pulso al pin TRIG y mide el tiempo que ECHO estï¿½ en HIGH.
-    Devuelve la distancia en centï¿½metros, o None si hay timeout.
-    """
+   
     GPIO.output(TRIG_PIN, False)
     time.sleep(0.05)
 
