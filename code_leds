@@ -18,8 +18,8 @@ V_PIN_ESTADO = 0
 # ===================================================================
 TRIG_PIN       = 23  # GPIO23 (pin físico 16)
 ECHO_PIN       = 24  # GPIO24 (pin físico 18)
-RED_PIN        = 21  # GPIO21 (pin físico 40) → LED rojo
-GREEN_PIN      = 20  # GPIO20 (pin físico 38) → LED verde
+GREEN_PIN          = 21  # GPIO21 (pin físico 40) → LED rojo
+RED_PIN      = 20  # GPIO20 (pin físico 38) → LED verde
 UMBRAL_OCUPADO = 3.0  # cm
 
 GPIO.setmode(GPIO.BCM)
