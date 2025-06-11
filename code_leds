@@ -14,12 +14,12 @@ blynk = BlynkLib.Blynk(BLYNK_AUTH, server=BLYNK_SERVER, port=BLYNK_PORT)
 V_PIN_ESTADO = 0
 
 # ===================================================================
-# CONFIGURACIÓN GPIO
+# CONFIGURACIï¿½N GPIO
 # ===================================================================
-TRIG_PIN       = 23  # GPIO23 (pin físico 16)
-ECHO_PIN       = 24  # GPIO24 (pin físico 18)
-GREEN_PIN          = 20 # GPIO21 (pin físico 40) → LED rojo
-RED_PIN      = 21  # GPIO20 (pin físico 38) → LED verde
+TRIG_PIN       = 23  # GPIO23 (pin fï¿½sico 16)
+ECHO_PIN       = 24  # GPIO24 (pin fï¿½sico 18)
+GREEN_PIN          = 20 # GPIO21 (pin fï¿½sico 40) ? LED rojo
+RED_PIN      = 21  # GPIO20 (pin fï¿½sico 38) ? LED verde
 UMBRAL_OCUPADO = 6.0  # cm
 
 GPIO.setmode(GPIO.BCM)
@@ -33,29 +33,30 @@ GPIO.output(RED_PIN, False)
 GPIO.output(GREEN_PIN, False)
 
 # ===================================================================
-# CONFIGURACIÓN BASE DE DATOS
+# CONFIGURACIï¿½N BASE DE DATOS
 # ===================================================================
 DB_CONFIG = {
     'host':     'localhost',
-    'user':     'tu_usuario',      # ej. 'root'
-    'password': 'tu_contraseña',   # ej. 'MiPass123'
-    'database': 'ParkingGDA'
+    'user':     'root',      # ej. 'root'
+    'password': 'JP',   # ej. 'MiPass123'
+    'database': 'ParkeaTec'
 }
-NUM_LUGAR = 10
+# Identificador del espacio (corresponde a idEspacio en la tabla Lectura)
+ID_ESPACIO = 1
 
 # ===================================================================
 # FUNCIONES
 # ===================================================================
 def medir_distancia():
     """
-    EnvÃ­a un pulso al pin TRIG y mide el tiempo que ECHO estÃ¡ en HIGH.
-    Devuelve la distancia en centÃ­metros, o None si hay timeout.
+    Envï¿½a un pulso al pin TRIG y mide el tiempo que ECHO estï¿½ en HIGH.
+    Devuelve la distancia en centï¿½metros, o None si hay timeout.
     """
     GPIO.output(TRIG_PIN, False)
-    time.sleep(0.05)  # 50 ms para estabilizar
+    time.sleep(0.05)
 
     GPIO.output(TRIG_PIN, True)
-    time.sleep(0.00001)  # 10 Âµs
+    time.sleep(0.00001)
     GPIO.output(TRIG_PIN, False)
 
     start_wait = time.time()
@@ -72,29 +73,28 @@ def medir_distancia():
 
     pulse_end = time.time()
     duracion = pulse_end - pulse_start
-    distancia_cm = (duracion * 34300) / 2
-    return distancia_cm
+    return (duracion * 34300) / 2
 
 
-def insertar_bd(estado, timestamp, num_lugar=NUM_LUGAR):
+def insertar_lectura(estado, timestamp, id_espacio=ID_ESPACIO):
     """
-    Inserta un nuevo registro en 'Espacio' con:
-      - NumLugar
-      - IDarea (NULL)
+    Inserta un nuevo registro en 'Lectura' con:
+      - idEspacio
+      - fechaHora
       - estado ('Ocupado' o 'Libre')
-      - fecha_hora_actualizacion (timestamp)
+    La columna idLectura debe estar configurada en MySQL como AUTO_INCREMENT.
     """
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor()
-        sql_insert = """
-            INSERT INTO Espacio (NumLugar, IDarea, estado, fecha_hora_actualizacion)
-            VALUES (%s, NULL, %s, %s);
-        """
-        cursor.execute(sql_insert, (num_lugar, estado, timestamp))
+        sql_insert = (
+            "INSERT INTO Lectura (idEspacio, fechaHora, estado)"
+            " VALUES (%s, %s, %s);"
+        )
+        cursor.execute(sql_insert, (id_espacio, timestamp, estado))
         conn.commit()
     except mysql.connector.Error as err:
-        print(f"[ERROR BD] No se pudo insertar en Espacio: {err}")
+        print(f"[ERROR BD] No se pudo insertar en Lectura: {err}")
     finally:
         if cursor:
             cursor.close()
@@ -102,7 +102,7 @@ def insertar_bd(estado, timestamp, num_lugar=NUM_LUGAR):
             conn.close()
 
 # ===================================================================
-# BLYNK: Manejador de evento de conexiÃ³n
+# BLYNK: Manejador de evento de conexiï¿½n
 # ===================================================================
 @blynk.on("connect")
 def blynk_connected_handler():
@@ -112,7 +112,7 @@ def blynk_connected_handler():
 # BUCLE PRINCIPAL
 # ===================================================================
 try:
-    print("Iniciando sistema (Ctrl+C para salir)â€¦")
+    print("Iniciando sistema (Ctrl+C para salir)ï¿½")
     while True:
         blynk.run()
 
@@ -121,33 +121,26 @@ try:
 
         if distancia is None:
             estado_sensor = "Libre"
-            print(f"[DEBUG] No se detectÃ³ eco â†’ \"{estado_sensor}\"")
+            print(f"[DEBUG] No se detectï¿½ eco ? \"{estado_sensor}\"")
         else:
-            print(f"[DEBUG] Distancia: {distancia:.1f} cm", end="  â†’  ")
-            if distancia <= UMBRAL_OCUPADO:
-                estado_sensor = "Ocupado"
-            else:
-                estado_sensor = "Libre"
+            print(f"[DEBUG] Distancia: {distancia:.1f} cm", end="  ?  ")
+            estado_sensor = "Ocupado" if distancia <= UMBRAL_OCUPADO else "Libre"
             print(estado_sensor)
 
-        # Control de LEDs segÃºn estado
-        if estado_sensor == "Ocupado":
-            GPIO.output(RED_PIN, True)
-            GPIO.output(GREEN_PIN, False)
-        else:
-            GPIO.output(RED_PIN, False)
-            GPIO.output(GREEN_PIN, True)
+        # Control de LEDs segï¿½n estado
+        GPIO.output(RED_PIN, estado_sensor == "Ocupado")
+        GPIO.output(GREEN_PIN, estado_sensor == "Libre")
 
-        # 1) Insertar en la BD
-        insertar_bd(estado_sensor, ahora)
+        # Insertar lectura (idLectura auto-incremental en DB)
+        insertar_lectura(estado_sensor, ahora)
 
-        # 2) Enviar solo â€œOcupadoâ€ o â€œLibreâ€ a Blynk en V0
+        # Enviar estado a Blynk en V0
         blynk.virtual_write(V_PIN_ESTADO, estado_sensor)
 
         time.sleep(0.5)
 
 except KeyboardInterrupt:
-    print("\nDetenido por el usuario. Liberando GPIOâ€¦")
+    print("\nDetenido por el usuario. Liberando GPIOï¿½")
 
 finally:
     GPIO.cleanup()
