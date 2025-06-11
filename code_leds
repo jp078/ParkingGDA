@@ -13,9 +13,7 @@ blynk = BlynkLib.Blynk(BLYNK_AUTH, server=BLYNK_SERVER, port=BLYNK_PORT)
 
 V_PIN_ESTADO = 0
 
-# ===================================================================
-# CONFIGURACIï¿½N GPIO
-# ===================================================================
+
 TRIG_PIN       = 23  # GPIO23 (pin fï¿½sico 16)
 ECHO_PIN       = 24  # GPIO24 (pin fï¿½sico 18)
 GREEN_PIN          = 20 # GPIO21 (pin fï¿½sico 40) ? LED rojo
@@ -32,21 +30,17 @@ GPIO.setup(GREEN_PIN, GPIO.OUT)
 GPIO.output(RED_PIN, False)
 GPIO.output(GREEN_PIN, False)
 
-# ===================================================================
-# CONFIGURACIï¿½N BASE DE DATOS
-# ===================================================================
+
 DB_CONFIG = {
     'host':     'localhost',
     'user':     'root',      # ej. 'root'
     'password': 'JP',   # ej. 'MiPass123'
     'database': 'ParkeaTec'
 }
-# Identificador del espacio (corresponde a idEspacio en la tabla Lectura)
+
 ID_ESPACIO = 1
 
-# ===================================================================
-# FUNCIONES
-# ===================================================================
+
 def medir_distancia():
     """
     Envï¿½a un pulso al pin TRIG y mide el tiempo que ECHO estï¿½ en HIGH.
@@ -101,16 +95,12 @@ def insertar_lectura(estado, timestamp, id_espacio=ID_ESPACIO):
         if conn:
             conn.close()
 
-# ===================================================================
-# BLYNK: Manejador de evento de conexiï¿½n
-# ===================================================================
+
 @blynk.on("connect")
 def blynk_connected_handler():
     print("[BLYNK] Conectado al servidor Blynk.")
 
-# ===================================================================
-# BUCLE PRINCIPAL
-# ===================================================================
+
 try:
     print("Iniciando sistema (Ctrl+C para salir)ï¿½")
     while True:
