@@ -71,13 +71,6 @@ def medir_distancia():
 
 
 def insertar_lectura(estado, timestamp, id_espacio=ID_ESPACIO):
-    """
-    Inserta un nuevo registro en 'Lectura' con:
-      - idEspacio
-      - fechaHora
-      - estado ('Ocupado' o 'Libre')
-    La columna idLectura debe estar configurada en MySQL como AUTO_INCREMENT.
-    """
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor()
