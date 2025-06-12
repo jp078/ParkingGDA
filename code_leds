@@ -33,8 +33,8 @@ GPIO.output(GREEN_PIN, False)
 
 DB_CONFIG = {
     'host':     'localhost',
-    'user':     'root',      # ej. 'root'
-    'password': '',   # ej. 'MiPass123'
+    'user':     'root',      
+    'password': '',    
     'database': 'ParkeaTec'
 }
 
@@ -107,14 +107,13 @@ try:
             estado_sensor = "Ocupado" if distancia <= UMBRAL_OCUPADO else "Libre"
             print(estado_sensor)
 
-        # Control de LEDs segï¿½n estado
+      
         GPIO.output(RED_PIN, estado_sensor == "Ocupado")
         GPIO.output(GREEN_PIN, estado_sensor == "Libre")
 
-        # Insertar lectura (idLectura auto-incremental en DB)
         insertar_lectura(estado_sensor, ahora)
 
-        # Enviar estado a Blynk en V0
+       
         blynk.virtual_write(V_PIN_ESTADO, estado_sensor)
 
         time.sleep(0.5)
